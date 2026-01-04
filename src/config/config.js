@@ -1,0 +1,9 @@
+export const CONFIG = {
+  CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "demo",
+  CLOUDINARY_UPLOAD_PRESET:
+    import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "ml_default",
+  USER_EMAIL: import.meta.env.VITE_USER_EMAIL || "user@example.com",
+  API_BASE_URL: "https://api.alumnx.com/api/hackathons",
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  ALLOWED_FILE_TYPES: ["image/jpeg", "image/jpg", "image/png"],
+};

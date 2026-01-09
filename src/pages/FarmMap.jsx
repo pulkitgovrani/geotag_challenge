@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ZoomIn, ZoomOut, Maximize2, Camera } from "lucide-react";
 import { Card } from "../components/common/Card";
 import { Button } from "../components/common/Button";
@@ -10,12 +10,44 @@ import { calculateBounds, getPlantPosition } from "../utils/helpers";
 export const FarmMap = () => {
   const { plants, setSelectedPlant, selectedPlant } = usePlants();
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const mapRef = useRef(null);
 
   const bounds = calculateBounds(plants);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 2));
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 5));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
-  const handleReset = () => setZoom(1);
+  const handleReset = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y,
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -56,12 +88,20 @@ export const FarmMap = () => {
 
       <Card>
         {plants.length > 0 ? (
-          <div className="relative overflow-hidden">
+          <div
+            ref={mapRef}
+            className="relative overflow-hidden"
+            style={{ cursor: isDragging ? "grabbing" : "grab" }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+          >
             <div
-              className="relative w-full bg-gradient-to-br from-green-100 via-emerald-100 to-green-200 rounded-lg border-2 border-green-300 transition-transform duration-300"
+              className="relative w-full bg-gradient-to-br from-green-100 via-emerald-100 to-green-200 rounded-lg border-2 border-green-300 transition-transform duration-150"
               style={{
                 height: "600px",
-                transform: `scale(${zoom})`,
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                 transformOrigin: "center",
               }}
             >
@@ -88,7 +128,7 @@ export const FarmMap = () => {
               })}
 
               {/* Legend */}
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg pointer-events-none">
                 <h3 className="font-semibold text-gray-800 mb-2">Map Legend</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
@@ -104,7 +144,7 @@ export const FarmMap = () => {
 
               {/* Coordinates display */}
               {bounds && (
-                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg text-xs">
+                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg text-xs pointer-events-none">
                   <div className="font-mono">
                     <div>
                       Lat: {bounds.minLat.toFixed(4)} -{" "}
